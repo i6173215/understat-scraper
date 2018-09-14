@@ -101,15 +101,14 @@ class understatScrapeTeam(object):
         return xG_data
 
 
-''' Class for scraping Expected Goals (xG) for a team
+''' Class for scraping Expected Goals (xG) for a player
     from understat.com
 
 args
-    team_name (string): team name used by understat in their url
-                         after team/
+    player_id (int): the understat.com numeric player id.
 '''
 class understatScrapePlayer(object):
-    '''Initialize class by setting team name and appropriate url'''
+    '''Initialize class by setting player id and appropriate url'''
     def __init__(self, player_id):
         self.player_id = player_id
         self.base_url = 'https://understat.com/player/'
@@ -121,6 +120,8 @@ class understatScrapePlayer(object):
         self.get_JSON_data()
         self.clean_JSON_data()
 
+    '''Function to get player team and information using
+       the ScrapePlayers class.'''
     def get_player_data(self):
         players_info = understatScrapePlayers()
         id_name_map = players_info.get_id_name_map()
@@ -133,19 +134,14 @@ class understatScrapePlayer(object):
             self.last_name = unidecode.unidecode(split_name[0])
         self.team = id_team_map[self.player_id]
 
-    '''Function to open understat webpage via Beautiful Soup.
-       Returns Beautiful Soup object with page contents'''
+    '''Function to open understat webpage via Beautiful Soup.'''
     def open_understat_page(self):
         page_response = requests.get(self.url)# timeout=5)
         page_content = bs(page_response.content, "html.parser")
         self.page_content = page_content
 
     '''Function takes in Beatiful Soup page content
-       and returns relevant string with JSON data
-
-    args
-        html_content (BS object): BS html parsed content
-    '''
+       and extracts JSON data.'''
     def get_JSON_data(self):
         html_data = str(self.page_content.find_all('script')[3])
         start = html_data.find("'")
@@ -155,12 +151,8 @@ class understatScrapePlayer(object):
         json_data = json.loads(json_decoded)
         self.json_data = json_data
 
-    '''Function to clean a raw JSON string from
-       understat.com
-
-    args
-        json_data (string): String with raw encoded JSON data
-    '''
+    '''Function to clean a raw JSON string of player data
+       from understat.com.'''
     def clean_JSON_data(self):
         clean_json = []
         for i in range(0, len(self.json_data)):
@@ -195,12 +187,12 @@ class understatScrapePlayer(object):
                 clean_json.append(clean_gw_data)
         self.clean_json = clean_json
 
-    '''This function returns the xG for a team
+    '''This function returns the xG for a player
        during each of the gameweeks in the interval
        specified by gw_start and gw_end
     args
-        gw_start (int): Gameweek to start as
-        gw_end   (int): Gameweek to end as
+        gw_start (int): Gameweek to start at
+        gw_end   (int): Gameweek to end at
     '''
     def scrape(self, gw_start=1, gw_end=4):
         clean_json = self.clean_json[gw_start-1: gw_end]
@@ -217,13 +209,8 @@ class understatScrapePlayer(object):
         return xG_data
 
 
-''' Class for scraping Expected Goals (xG) for a team
-    from understat.com
-
-args
-    team_name (string): team name used by understat in their url
-                         after team/
-'''
+''' Class for scraping Expected Goals (xG) for all players
+    from understat.com.'''
 class understatScrapePlayers(object):
     '''Initialize class by setting team name and appropriate url'''
     def __init__(self):
@@ -351,43 +338,3 @@ class understatScrapeTeams(object):
             team_clean_data['fixtures'] = team['history']
             teams_clean_data.append(team_clean_data)
         return teams_clean_data
-
-
-
-'''
-    def get_name_id_map(self):
-        player_list = self.player_data
-        name_id_mapping = {}
-
-        for player in player_list:
-            player_name = player['player_name']
-            #if len(player_name) > 1:
-            #   player_name = unidecode.unidecode(player_name[1])
-            #else:
-            #    player_name = unidecode.unidecode(player_name[0])
-            player_id = player['id']
-            name_id_mapping[player_name] = player_id
-
-        return name_id_mapping
-
-    def get_id_name_map(self):
-        player_list = self.player_data
-        id_name_mapping = {}
-
-        for player in player_list:
-            player_name = player['player_name']
-            player_id = player['id']
-            id_name_mapping[player_id] = player_name
-
-        return id_name_mapping
-
-    def get_id_team_map(self):
-        player_list = self.player_data
-        id_team_map = {}
-
-        for player in player_list:
-            player_id = player['id']
-            player_team = player['team_title']
-            id_team_map[player_id] = player_team
-        return id_team_map
-'''
